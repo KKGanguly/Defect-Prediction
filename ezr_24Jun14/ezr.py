@@ -522,7 +522,7 @@ def smo(i:data, score=lambda B,R: B-R, callBack=lambda x:x ):
   random.shuffle(i.rows) # remove any  bias from older runs
   return _smo1(i.rows[the.label:], _ranked(i.rows[:the.label]))
 
-#--------- --------- --------- --------- --------- --------- --------- --------- ---------
+#--------- --------- --------- --------- --------- --------- --------- --------- ---------
 # ## Stats
 
 class SOME:
@@ -587,7 +587,8 @@ class SOME:
     def bar(i, some:SOME, fmt="%8.3f", word="%10s", width=50) -> str:
       "Pretty print `some.has`."
       has = some.has() 
-      out = [' '] * width
+      #altered
+      out = [' '] * (width)
       cap = lambda x: 1 if x > 1 else (0 if x<0 else x)
       pos = lambda x: int(width * cap(i.norm(x)))
       [a, b, c, d, e]  = [has[int(len(has)*x)] for x in [0.1,0.3,0.5,0.7,0.9]]
@@ -595,7 +596,7 @@ class SOME:
       for j in range(na,nb): out[j] = "-"
       for j in range(nd,ne): out[j] = "-"
       out[width//2] = "|"
-      out[nc] = "*" 
+      out[nc-1] = "*" 
       return ', '.join(["%2d" % some.rank, word % some.txt, fmt%c, fmt%(d-b),
                         ''.join(out),fmt%has[0],fmt%has[-1]])
 
@@ -630,7 +631,7 @@ class SOME:
       n      = sum(pull(yhat).delta(pull(zhat)) > delta0 for _ in range(samples)) 
       return n / samples >= confidence # true if different
 
-#--------- --------- --------- --------- --------- --------- --------- --------- ---------
+#--------- --------- --------- --------- --------- --------- --------- --------- ---------
 # ## Misc Functions:
 
 # SOME general Python tricks
@@ -713,7 +714,7 @@ def bars(somes: list[SOME], width:integer=40) ->  None:
     last=some.rank
     print(all.bar(some.has(), width=width, word="%20s", fmt="%5.2f"))
 
-#--------- --------- --------- --------- --------- --------- --------- --------- ---------
+#--------- --------- --------- --------- --------- --------- --------- --------- ---------
 # ## Main
 
 def main() -> None: 
