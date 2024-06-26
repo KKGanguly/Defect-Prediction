@@ -1,3 +1,4 @@
+from math import ceil
 from sklearn.tree import DecisionTreeClassifier
 from predictor import *
 from scipy.io import arff
@@ -21,4 +22,4 @@ for filename in arff_files:
     for split, label_true, label_false in zip(splits,labels_true, labels_false):
         dataset = make_dataset(df.copy(),label_true=label_true, label_false=label_false,split_yval=split)
         print("############Results for "+filename+" data:"+str(label_true)+"########")
-        run_models([dataset], models = {"Decision Tree":DecisionTreeClassifier(),"Naive Bayes":GaussianNB()},preprocessor= lambda data: data)
+        run_models([dataset], models = {"Decision Tree":DecisionTreeClassifier(criterion='entropy',min_samples_split=ceil(len(dataset)/25), min_samples_leaf=ceil(len(dataset)/25)),"Naive Bayes":GaussianNB()},preprocessor= lambda data: data)
