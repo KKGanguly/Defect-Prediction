@@ -1,3 +1,4 @@
+import os
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold, train_test_split
@@ -8,6 +9,15 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import confusion_matrix
 import numpy as np
 from collections import defaultdict
+from collections import Counter
+from collections import Counter
+from sklearn.datasets import make_classification
+from matplotlib import pyplot
+from numpy import where
+from imblearn.over_sampling import SMOTE
+
+from ezr_24Jun14.ezr import sk 
+
 try:
     from ezr_24Jun14.ezr import SOME, report
 except ImportError as e:
@@ -15,25 +25,43 @@ except ImportError as e:
 
 
 def cross_validate(data, class_index, model,drop_names, preprocessor):
-    data = merge_drop(data,drop_names)
-    preprocessor(data)
-    X, y = split(class_index,data)
-    kf = KFold(n_splits=10, shuffle=True, random_state=1)
-    unique_labels = y.unique()
-    for train_index, test_index in kf.split(X):
-        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+    
+    #counter = Counter(y)
+    kf = KFold(n_splits=10, shuffle=True, random_state=1222)
+    folds = list(kf.split(range(len(data))))
+    #print(X.iloc[indices[0]])
+    unique_labels = data.iloc[:,-1].unique()
+    for i, (train_index, test_index) in enumerate(folds):
+        X_train, X_test, y_train, y_test = split_data(data, train_index, test_index) 
         model = build_model(X_train, y_train, model)
         res = predict(model, X_test)
-        yield get_result(res,y_test,unique_labels)    
+        yield get_result(res,y_test,unique_labels) 
+
+def split_data(data, train_index, test_index):
+    X_train, X_test = data.iloc[train_index, :-1], data.iloc[test_index, :-1]
+    y_train, y_test = data.iloc[train_index, -1], data.iloc[test_index, -1]
+    #print(X_train,X_test,y_train,y_test)
+    return X_train,X_test,y_train,y_test
+
+def split_data_custom(X, y, train_index, test_index):
+    X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+    y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+    return X_train,X_test,y_train,y_test   
 def preprocess(data):
     data.iloc[:,-1] = np.where(data.iloc[:,-1] > 0, "1", "0")
-def run_models(data, models, drop_names=[], preprocessor = preprocess):
+    return data
+def run_models( label, data, models, drop_names=[], preprocessor = preprocess):
     results_precision = []
     results_recall = []
     results_false_alarm = []
     results_accuracy = []
     results_f1 = []
+    data = merge_drop(data,drop_names)
+    data = preprocessor(data)
+    #counter = Counter(data.iloc[:,-1] )
+    #print(counter)
+    
+    #data = pd.merge(X, y, left_index=True, right_index=True)
     for name, model in models.items():
         model_results = cross_validate(data,-1,model,drop_names, preprocessor = preprocessor)
         result_precision = []
@@ -58,6 +86,15 @@ def run_models(data, models, drop_names=[], preprocessor = preprocess):
     report(results_recall)
     print("##False Alarm Report")
     report(results_false_alarm)
+    
+def report_csv(label, somes):
+  all = SOME(somes)
+  last = None
+  for some in sk(somes):
+    if some.rank != last: print("#")
+    last=some.rank
+    parts = all.bar(some,width=40,word="%20s", fmt="%5.2f").split(",")
+    print(parts[0], parts[1], parts[2], parts[3])
     
 def get_train_test_split(train, test, class_index):
     train_data_merged = merge_drop(train)
